@@ -29,8 +29,8 @@ public class Robot extends TimedRobot {
 		xboxController = new XboxController(0);
 		leftMotor = new WPI_TalonSRX(2);
 		rightMotor = new WPI_TalonSRX(4);
-		leftMotor.setExpiration(30);
-		rightMotor.setExpiration(30);
+		// leftMotor.setExpiration(30);
+		// rightMotor.setExpiration(30);
 		autonomousTimer = new Timer();
 		if (DEBUG) System.out.println("robotInit");
 	}
