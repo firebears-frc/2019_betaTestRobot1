@@ -8,87 +8,85 @@
 package frc.robot;
 
 import edu.wpi.first.wpilibj.*;
-import com.ctre.phoenix.motorcontrol.can.*;
+import edu.wpi.first.wpilibj.GenericHID.Hand;
+
+import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 
 /**
- * The VM is configured to automatically run this class, and to call the
- * functions corresponding to each mode, as described in the TimedRobot
- * documentation. If you change the name of this class or the package after
- * creating this project, you must also update the build.gradle file in the
- * project.
+ * Simple program for our roboRIO test board.
+ * There are two TalonSRXs attached, with CAN IDs of 2 and 4.
  */
 public class Robot extends TimedRobot {
 
-  Joystick stick;
-  SpeedController motor;
-  Timer autonomousTimer;
+	public static boolean DEBUG = true;
+	private XboxController xboxController;
+	private WPI_TalonSRX leftMotor;
+	private WPI_TalonSRX rightMotor;
+	Timer autonomousTimer;
 
-  /**
-   * This function is run when the robot is first started up and should be used
-   * for any initialization code.
-   */
-  @Override
-  public void robotInit() {
-    stick = new Joystick(0);
-    motor = new WPI_TalonSRX(2);
-    autonomousTimer = new Timer();
-  }
+	@Override
+	public void robotInit() {
+		xboxController = new XboxController(0);
+		leftMotor = new WPI_TalonSRX(2);
+		rightMotor = new WPI_TalonSRX(4);
+		leftMotor.setExpiration(30);
+		rightMotor.setExpiration(30);
+		autonomousTimer = new Timer();
+		if (DEBUG) System.out.println("robotInit");
+	}
 
-  /**
-   * This function is called every robot packet, no matter the mode. Use this for
-   * items like diagnostics that you want ran during disabled, autonomous,
-   * teleoperated and test.
-   *
-   * <p>
-   * This runs after the mode specific periodic functions, but before LiveWindow
-   * and SmartDashboard integrated updating.
-   */
-  @Override
-  public void robotPeriodic() {
-  }
+	@Override
+	public void robotPeriodic() {
+	}
 
-  /**
-   * This autonomous (along with the chooser code above) shows how to select
-   * between different autonomous modes using the dashboard. The sendable chooser
-   * code works with the Java SmartDashboard. If you prefer the LabVIEW Dashboard,
-   * remove all of the chooser code and uncomment the getString line to get the
-   * auto name from the text box below the Gyro
-   *
-   * <p>
-   * You can add additional auto modes by adding additional comparisons to the
-   * switch structure below with additional strings. If using the SendableChooser
-   * make sure to add them to the chooser code above as well.
-   */
-  @Override
-  public void autonomousInit() {
-    autonomousTimer.reset();
-    motor.set(0.5);
-  }
+	@Override
+	public void teleopInit() {
+		if (DEBUG) System.out.println("teleopInit");
+	}
 
-  /**
-   * This function is called periodically during autonomous.
-   */
-  @Override
-  public void autonomousPeriodic() {
-    double currentTime = autonomousTimer.get();
-    if (currentTime > 5.0) {
-      motor.set(0.0);
-    }
-  }
+	@Override
+	public void teleopPeriodic() {
+		double leftSpeed = -1 * xboxController.getY(Hand.kLeft);
+		double rightSpeed = -1 * xboxController.getY(Hand.kRight);
+		boolean slowMode = xboxController.getBumper(Hand.kRight);
+		if (slowMode) {
+			leftSpeed = leftSpeed * 0.5;
+			rightSpeed = rightSpeed * 0.5;
+		}
+		leftMotor.set(leftSpeed);
+		rightMotor.set(rightSpeed);
+		if (DEBUG) System.out.println("teleopPeriodic: "+ slowMode + "  " + leftSpeed + ", " + rightSpeed); 
+	}
 
-  /**
-   * This function is called periodically during operator control.
-   */
-  @Override
-  public void teleopPeriodic() {
-    double speed = stick.getY();
-    motor.set(speed);
-  }
+	@Override
+	public void autonomousInit() {
+		autonomousTimer.reset();
+		autonomousTimer.start();
+		leftMotor.set(0.5);
+		rightMotor.set(0.5);
+		if (DEBUG) System.out.println("autnomousInit");
+	}
 
-  /**
-   * This function is called periodically during test mode.
-   */
-  @Override
-  public void testPeriodic() {
-  }
+	@Override
+	public void autonomousPeriodic() {
+		double currentTime = autonomousTimer.get();
+		if (currentTime > 5.0) {
+			leftMotor.set(0.0);
+			rightMotor.set(0.0);
+			autonomousTimer.stop();
+			if (DEBUG) System.out.println("teleopPeriodic: stopped");
+		} else {
+			leftMotor.set(0.5);
+			rightMotor.set(0.5);
+			if (DEBUG) System.out.println("teleopPeriodic: MOVING");
+		}
+
+	}
+
+	@Override
+	public void disabledInit() {
+		leftMotor.set(0.0);
+		rightMotor.set(0.0);
+		if (DEBUG) System.out.println("disabledInit");
+	}
 }
